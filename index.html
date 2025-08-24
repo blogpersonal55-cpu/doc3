@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Documentos</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    h2 { text-align: center; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 15px; padding: 10px; background: #007BFF; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #mensaje { margin-top: 15px; font-weight: bold; text-align: center; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #007BFF; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registro de Documentos</h2>
+    <label>Tipo</label>
+    <select id="tipo">
+      <option value="Oficio">Oficio</option>
+      <option value="Resolución">Resolución</option>
+      <option value="Carta">Carta</option>
+    </select>
+
+    <label>Destino</label>
+    <input type="text" id="destino">
+
+    <label>Asunto</label>
+    <input type="text" id="asunto">
+
+    <label>Redactor</label>
+    <input type="text" id="redactor">
+
+    <button onclick="guardar()">Guardar registro</button>
+    <div id="mensaje"></div>
+
+    <h3>📌 Registros en tiempo real</h3>
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Número</th>
+          <th>Expediente</th>
+          <th>Fecha</th>
+          <th>Asunto</th>
+          <th>Destino</th>
+          <th>Redactor</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwZQkYYOsx5r9r-wd3jF5CWcUKNWnGpYVDZddD4LpfCLhYZvxEpz8QOYUtz6N2FdeaIlA/exec"; // tu enlace
+
+    function guardar() {
+      document.getElementById("mensaje").innerText = "⏳ Guardando...";
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Tipo: document.getElementById("tipo").value,
+          Destino: document.getElementById("destino").value,
+          Asunto: document.getElementById("asunto").value,
+          Redactor: document.getElementById("redactor").value
+        })
+      })
+      .then(r => r.json())
+      .then(j => {
+        if (j.status === "OK") {
+          document.getElementById("mensaje").innerText = 
+            "✅ Guardado: " + j.numero + " (" + j.expediente + ")";
+          cargarTabla();
+        } else {
+          document.getElementById("mensaje").innerText = "❌ Error: " + j.message;
+        }
+      })
+      .catch(e => {
+        document.getElementById("mensaje").innerText = "❌ Error fetch: " + e.message;
+      });
+    }
+
+    function cargarTabla() {
+      fetch(API_URL)
+        .then(r => r.json())
+        .then(data => {
+          const tbody = document.querySelector("#tabla tbody");
+          tbody.innerHTML = "";
+          data.forEach(reg => {
+            let fila = `<tr>
+              <td>${reg.Tipo}</td>
+              <td>${reg.Numero}</td>
+              <td>${reg.Expediente}</td>
+              <td>${new Date(reg.Fecha).toLocaleString()}</td>
+              <td>${reg.Asunto}</td>
+              <td>${reg.Destino}</td>
+              <td>${reg.Redactor}</td>
+            </tr>`;
+            tbody.innerHTML += fila;
+          });
+        });
+    }
+
+    // Cargar al iniciar
+    cargarTabla();
+    // Refrescar cada 10 segundos
+    setInterval(cargarTabla, 10000);
+  </script>
+</body>
+</html>
